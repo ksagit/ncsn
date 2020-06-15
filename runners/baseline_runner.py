@@ -11,8 +11,8 @@ import torch.optim as optim
 from torchvision.datasets import MNIST, CIFAR10, FashionMNIST
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Subset
-from datasets.celeba import CelebA
-from models.refinenet_dilated_baseline import RefineNetDilated
+from ..datasets.celeba import CelebA
+from ..models.refinenet_dilated_baseline import RefineNetDilated
 
 __all__ = ['BaselineRunner']
 

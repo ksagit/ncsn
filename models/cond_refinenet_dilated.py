@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 from functools import partial
+from torch.utils.checkpoint import checkpoint
 
 
 def conv3x3(in_planes, out_planes, stride=1, bias=False):
@@ -185,7 +186,7 @@ class CondRefineBlock(nn.Module):
 
         self.crp = CondCRPBlock(features, 2, num_classes, normalizer, act)
 
-    def forward(self, xs, y, output_shape):
+    def _forward(self, xs, y, output_shape):
         assert isinstance(xs, tuple) or isinstance(xs, list)
         hs = []
         for i in range(len(xs)):
@@ -201,6 +202,9 @@ class CondRefineBlock(nn.Module):
         h = self.output_convs(h, y)
 
         return h
+
+    def forward(self, *args):
+        return checkpoint(self._forward, *args)
 
 
 class ConvMeanPool(nn.Module):
@@ -285,7 +289,7 @@ class ConditionalResidualBlock(nn.Module):
 
         self.normalize1 = normalization(input_dim, num_classes)
 
-    def forward(self, x, y):
+    def _forward(self, x, y):
         output = self.normalize1(x, y)
         output = self.non_linearity(output)
         output = self.conv1(output)
@@ -299,6 +303,9 @@ class ConditionalResidualBlock(nn.Module):
             shortcut = self.shortcut(x)
 
         return shortcut + output
+
+    def forward(self, *args):
+        return checkpoint(self._forward, *args)
 
 
 class ConditionalInstanceNorm2dPlus(nn.Module):

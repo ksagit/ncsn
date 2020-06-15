@@ -2,8 +2,8 @@ import logging
 import torch.optim as optim
 import torch.nn as nn
 from torch.distributions import Normal
-from losses.sliced_sm import *
-from models.gmm import GMM, Gaussian, GMMDist, Square, GMMDistAnneal
+from ..losses.sliced_sm import *
+from ..models.gmm import GMM, Gaussian, GMMDist, Square, GMMDistAnneal
 import matplotlib.pyplot as plt
 import torch
 import seaborn as sns

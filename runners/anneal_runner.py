@@ -1,7 +1,7 @@
 import numpy as np
 import tqdm
-from losses.dsm import anneal_dsm_score_estimation
-from losses.sliced_sm import anneal_sliced_score_estimation_vr
+from ..losses.dsm import anneal_dsm_score_estimation
+from ..losses.sliced_sm import anneal_sliced_score_estimation_vr
 import torch.nn.functional as F
 import logging
 import torch
@@ -12,12 +12,23 @@ import torch.optim as optim
 from torchvision.datasets import MNIST, CIFAR10, SVHN
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Subset
-from datasets.celeba import CelebA
-from models.cond_refinenet_dilated import CondRefineNetDilated
+from ..datasets.celeba import CelebA
+from ..models.cond_refinenet_dilated import CondRefineNetDilated
 from torchvision.utils import save_image, make_grid
 from PIL import Image
+from torch.utils.checkpoint import checkpoint
 
 __all__ = ['AnnealRunner']
+
+def update_score(score, optimizer, X, sigmas, anneal_power):
+    X = X / 256. * 255. + torch.rand_like(X) / 256.
+    labels = torch.randint(0, len(sigmas), (X.shape[0],), device=X.device)
+    loss = anneal_dsm_score_estimation(score, X, labels, sigmas, anneal_power)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    return loss
 
 
 class AnnealRunner():
@@ -127,26 +138,21 @@ class AnnealRunner():
             np.exp(np.linspace(np.log(self.config.model.sigma_begin), np.log(self.config.model.sigma_end),
                                self.config.model.num_classes))).float().to(self.config.device)
 
-
+        import pdb
         for epoch in range(self.config.training.n_epochs):
-            for i, (X, y) in enumerate(dataloader):
+            # Label is unused
+            for i, (X, _) in enumerate(dataloader):
                 step += 1
                 score.train()
                 X = X.to(self.config.device)
-                X = X / 256. * 255. + torch.rand_like(X) / 256.
-                if self.config.data.logit_transform:
-                    X = self.logit_transform(X)
 
-                labels = torch.randint(0, len(sigmas), (X.shape[0],), device=X.device)
-                if self.config.training.algo == 'dsm':
-                    loss = anneal_dsm_score_estimation(score, X, labels, sigmas, self.config.training.anneal_power)
-                elif self.config.training.algo == 'ssm':
-                    loss = anneal_sliced_score_estimation_vr(score, X, labels, sigmas,
-                                                             n_particles=self.config.training.n_particles)
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                loss = update_score(
+                    score=score,
+                    optimizer=optimizer,
+                    X=X,
+                    sigmas=sigmas,
+                    anneal_power=self.config.training.anneal_power,
+                )
 
                 tb_logger.add_scalar('loss', loss, global_step=step)
                 logging.info("step: {}, loss: {}".format(step, loss.item()))
@@ -232,6 +238,7 @@ class AnnealRunner():
         sigmas = np.exp(np.linspace(np.log(self.config.model.sigma_begin), np.log(self.config.model.sigma_end),
                                     self.config.model.num_classes))
 
+        # Score is in eval mode
         score.eval()
         grid_size = 5
 
