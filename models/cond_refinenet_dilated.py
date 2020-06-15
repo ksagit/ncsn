@@ -204,7 +204,14 @@ class CondRefineBlock(nn.Module):
         return h
 
     def forward(self, *args):
-        return checkpoint(self._forward, *args)
+        # for x in xs:
+        #     if not x.requires_grad:
+        #         x.requires_grad = True
+        # if not y.requires_grad:
+        #     y.requires_grad = True
+        #
+        # return checkpoint(self._forward, xs, y, output_shape)
+        return self._forward(*args)
 
 
 class ConvMeanPool(nn.Module):
@@ -304,9 +311,14 @@ class ConditionalResidualBlock(nn.Module):
 
         return shortcut + output
 
-    def forward(self, *args):
-        return checkpoint(self._forward, *args)
+    def forward(self, x, y):
+        if not x.requires_grad:
+            x.requires_grad = True
+        # if not y.requires_grad:
+        #     y.requires_grad = True
 
+        return checkpoint(self._forward, x, y)
+        # return self._forward(x, y)
 
 class ConditionalInstanceNorm2dPlus(nn.Module):
     def __init__(self, num_features, num_classes, bias=True):

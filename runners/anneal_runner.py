@@ -29,7 +29,6 @@ def update_score(score, optimizer, X, sigmas, anneal_power):
 
     optimizer.zero_grad()
     loss.backward()
-    pdb.set_trace()
     optimizer.step()
     return loss
 
