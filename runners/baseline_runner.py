@@ -1,6 +1,6 @@
 import numpy as np
 import tqdm
-from losses.dsm import dsm_score_estimation
+from ..losses.dsm import dsm_score_estimation
 import torch.nn.functional as F
 import logging
 import torch

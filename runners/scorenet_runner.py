@@ -1,6 +1,6 @@
 import numpy as np
-from losses.sliced_sm import sliced_score_estimation_vr
-from losses.dsm import dsm_score_estimation
+from ..losses.sliced_sm import sliced_score_estimation_vr
+from ..losses.dsm import dsm_score_estimation
 import logging
 import torch
 import os
@@ -10,7 +10,7 @@ import torch.optim as optim
 from torchvision.datasets import MNIST, CIFAR10, ImageFolder
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Subset
-from models.scorenet import ResScore
+from ..models.scorenet import ResScore
 
 __all__ = ['ScoreNetRunner']
 

@@ -8,7 +8,7 @@ import sys
 import os
 import torch
 import numpy as np
-from .runners import *
+from .runners.anneal_runner import AnnealRunner
 
 
 def parse_args_and_config():

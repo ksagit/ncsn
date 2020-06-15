@@ -20,6 +20,8 @@ from torch.utils.checkpoint import checkpoint
 
 __all__ = ['AnnealRunner']
 
+import pdb
+
 def update_score(score, optimizer, X, sigmas, anneal_power):
     X = X / 256. * 255. + torch.rand_like(X) / 256.
     labels = torch.randint(0, len(sigmas), (X.shape[0],), device=X.device)
@@ -27,6 +29,7 @@ def update_score(score, optimizer, X, sigmas, anneal_power):
 
     optimizer.zero_grad()
     loss.backward()
+    pdb.set_trace()
     optimizer.step()
     return loss
 
